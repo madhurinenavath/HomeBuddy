@@ -11,6 +11,7 @@ import PaymentStatus from "./pages/PaymentStatus";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
+import ServiceDetails from "./pages/ServiceDetails";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/service/:id" element={<ServiceDetails />} />
             <Route path="/booking" element={<Booking />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-status" element={<PaymentStatus />} />

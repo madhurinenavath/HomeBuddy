@@ -8,6 +8,8 @@ import { StatusBadge } from "../components/StatusBadge";
 export default function PaymentStatus() {
   const [searchParams] = useSearchParams();
   const status = searchParams.get("status");
+  const date = searchParams.get("date");
+  const time = searchParams.get("time");
   const navigate = useNavigate();
   
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
@@ -53,8 +55,8 @@ export default function PaymentStatus() {
               >
                 Track Your Order <ArrowRight className="h-5 w-5" />
               </button>
-              <Link to="/services" className="block w-full py-4 font-bold text-gray-500 hover:text-gray-800 transition-colors">
-                Book Another Service
+              <Link to="/profile" className="block w-full py-4 font-bold text-gray-500 hover:text-gray-800 transition-colors">
+                View in My Orders
               </Link>
             </>
           ) : (
@@ -73,22 +75,24 @@ export default function PaymentStatus() {
       {/* Tracking Modal Component */}
       <Modal isOpen={trackingModalOpen} onClose={() => setTrackingModalOpen(false)} title="Live Order Tracking">
         <div className="mb-6 flex justify-between items-center border-b border-gray-100 pb-4">
-          <div>
-            <h3 className="font-bold text-gray-900 text-lg">Order #ORD-9821-XA</h3>
-            <p className="text-gray-500 text-sm">Status Update</p>
-          </div>
-          <StatusBadge status="In Progress" />
-        </div>
+           <div>
+             <h3 className="font-bold text-gray-900 text-lg">Order #ORD-9821-XA</h3>
+             <p className="text-primary font-bold text-sm mt-1 flex items-center gap-1.5 bg-primary/10 w-fit px-2 py-0.5 rounded uppercase tracking-wider">
+               📅 Scheduled for: {date} {time}
+             </p>
+           </div>
+           <StatusBadge status="In Progress" />
+         </div>
         
-        <Timeline currentStage="Assigned" />
+        <Timeline currentStage="Requested" />
         
         <div className="mt-8 p-4 bg-primary/5 rounded-xl border border-primary/20 flex items-start gap-4">
           <div className="bg-primary text-white rounded-full p-2 h-10 w-10 flex items-center justify-center font-bold">
             M
           </div>
           <div>
-            <h4 className="font-bold text-gray-900">Mohammad Ali (⭐ 4.8)</h4>
-            <p className="text-sm text-gray-600 mt-1">Professional has been assigned and will be on their way soon.</p>
+            <h4 className="font-bold text-gray-900">Professional Match Pending</h4>
+            <p className="text-sm text-gray-600 mt-1">We are actively assigning the best professional for your schedule.</p>
           </div>
         </div>
       </Modal>

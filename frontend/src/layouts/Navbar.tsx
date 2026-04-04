@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
-import { Wrench, User, Calendar, Search, ShoppingCart } from "lucide-react";
+import { Wrench, User, Calendar, ShoppingCart } from "lucide-react";
+import { SearchBar } from "../components/SearchBar";
+import { useCart } from "../CartContext";
 
 export function Navbar() {
+  const { totalItems } = useCart();
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,13 +18,8 @@ export function Navbar() {
             </Link>
 
             {/* Search Bar */}
-            <div className="hidden md:flex relative items-center w-full max-w-md">
-              <input 
-                type="text" 
-                placeholder="Search for services..." 
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-transparent rounded-full focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary focus:bg-white text-sm transition-all"
-              />
-              <Search className="absolute left-3.5 h-4 w-4 text-gray-400" />
+            <div className="hidden md:flex flex-1 max-w-md">
+              <SearchBar className="w-full" inputClassName="rounded-full bg-gray-50 hover:bg-gray-100 text-sm focus:bg-white" />
             </div>
           </div>
           
@@ -36,11 +34,13 @@ export function Navbar() {
             </div>
             
             <div className="flex items-center space-x-4 md:border-l md:border-gray-100 md:pl-6">
-              <Link to="/cart" className="relative text-gray-600 hover:text-primary transition-colors flex items-center">
+              <Link to="/booking" className="relative text-gray-600 hover:text-primary transition-colors flex items-center">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-1.5 -right-1.5 bg-secondary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
-                  0
-                </span>
+                {totalItems > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-secondary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
+                    {totalItems}
+                  </span>
+                )}
               </Link>
 
               <Link to="/profile" className="text-gray-600 hover:text-primary transition-colors">

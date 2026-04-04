@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { services } from "../utils/data";
+import { useNavigate } from "react-router-dom";
 import { Stepper } from "../components/Stepper";
 import { CartItemCard } from "../components/CartItemCard";
-import { ArrowRight, ArrowLeft, MapPin, Calendar as CalendarIcon, Clock, ShieldCheck, Map } from "lucide-react";
+import { DatePicker } from "../components/DatePicker";
+import { useCart } from "../CartContext";
+import { ArrowRight, ArrowLeft, MapPin, Calendar as CalendarIcon, Clock, Map, ShoppingBag } from "lucide-react";
 
 export default function Booking() {
-  const [searchParams] = useSearchParams();
-  const serviceId = searchParams.get("serviceId");
+  const { cart, subtotal, totalItems } = useCart();
   const navigate = useNavigate();
-
-  const service = services.find(s => s.serviceId === serviceId);
 
   // Multi-step state
   const [currentStep, setCurrentStep] = useState(0);
@@ -22,28 +20,22 @@ export default function Booking() {
   const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
   const [isFindingLocation, setIsFindingLocation] = useState(false);
 
-  if (!service) {
+  if (cart.length === 0) {
     return (
-      <div className="flex-grow flex items-center justify-center p-8 bg-slate-50">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Service not found</h2>
-          <button onClick={() => navigate('/services')} className="text-primary font-bold hover:underline">Return to services</button>
+      <div className="flex-grow flex flex-col items-center justify-center p-8 bg-slate-50 min-h-[60vh]">
+        <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-sm border border-gray-100">
+          <div className="bg-gray-50 flex items-center justify-center w-20 h-20 rounded-full mx-auto mb-6">
+            <ShoppingBag className="h-10 w-10 text-gray-300" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Cart is Empty</h2>
+          <p className="text-gray-500 mb-6">Please add some services to your cart before proceeding to checkout.</p>
+          <button onClick={() => navigate('/services')} className="bg-primary text-white font-bold w-full py-4 rounded-xl hover:bg-primary-dark transition-colors">
+            Browse Services
+          </button>
         </div>
       </div>
     );
   }
-
-  // --- Mock Data Setups ---
-  const today = new Date();
-  const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
-  const day3 = new Date(); day3.setDate(today.getDate() + 2);
-  
-  const formattedDates = [
-    { label: "Today", value: today.toISOString().split('T')[0], dayStr: today.toLocaleDateString('en-US', {weekday: 'short'}) },
-    { label: "Tomorrow", value: tomorrow.toISOString().split('T')[0], dayStr: tomorrow.toLocaleDateString('en-US', {weekday: 'short'}) },
-    { label: day3.toLocaleDateString('en-US', {day:'numeric', month:'short'}), value: day3.toISOString().split('T')[0], dayStr: day3.toLocaleDateString('en-US', {weekday: 'short'}) }
-  ];
-  const slots = ["09:00 AM", "11:00 AM", "01:00 PM", "03:00 PM", "05:00 PM"];
 
   const [addresses, setAddresses] = useState([
     { id: 1, type: "Home", name: "Demo User", address: "Flat 4B, Signature Towers, MG Road, Gurgaon, 122002" },
@@ -63,7 +55,6 @@ export default function Booking() {
     }, 1500);
   };
 
-  // Validation before going to next step
   const handleNext = () => {
     if (currentStep === 1 && (!selectedDate || !selectedSlot)) return;
     if (currentStep === 2 && selectedAddress === null) return;
@@ -74,7 +65,7 @@ export default function Booking() {
     } else {
       // Final step: Proceed to payment
       const addrDetails = addresses.find(a => a.id === selectedAddress)?.address || '';
-      navigate(`/payment?serviceId=${service.serviceId}&date=${selectedDate}&time=${selectedSlot}&address=${encodeURIComponent(addrDetails)}`);
+      navigate(`/payment?date=${selectedDate}&time=${selectedSlot}&address=${encodeURIComponent(addrDetails)}`);
     }
   };
 
@@ -103,13 +94,12 @@ export default function Booking() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Your Cart</h1>
-                <span className="text-sm font-medium text-gray-500">1 Item</span>
+                <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">{totalItems} {totalItems === 1 ? 'Item' : 'Items'}</span>
               </div>
-              <CartItemCard service={service} />
-              
-              <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mt-6 flex gap-3 text-blue-800">
-                 <ShieldCheck className="h-6 w-6 flex-shrink-0" />
-                 <p className="text-sm">You are adding a single service to your cart. To add different services, complete this booking first or use our multi-booking feature (Coming soon).</p>
+              <div className="space-y-4">
+                {cart.map(service => (
+                  <CartItemCard key={service.serviceId} service={service} />
+                ))}
               </div>
             </div>
           )}
@@ -120,36 +110,11 @@ export default function Booking() {
                <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                  <CalendarIcon className="h-6 w-6 text-primary" /> Pick a Schedule
                </h1>
-               
-               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-6">
-                  <h3 className="font-bold text-lg mb-4 text-gray-800">Select Date</h3>
-                  <div className="flex flex-wrap gap-4">
-                    {formattedDates.map((d) => (
-                      <button
-                        key={d.value}
-                        onClick={() => setSelectedDate(d.value)}
-                        className={`flex flex-col items-center justify-center py-4 px-6 rounded-xl border-2 transition-all min-w-[100px] ${selectedDate === d.value ? 'border-primary bg-primary/5 text-primary shadow-sm' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}
-                      >
-                         <span className="text-xs uppercase font-bold opacity-60 mb-1">{d.dayStr}</span>
-                         <span className="text-lg font-black">{d.label}</span>
-                      </button>
-                    ))}
-                  </div>
-               </div>
-
                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-                  <h3 className="font-bold text-lg mb-4 text-gray-800">Select Time Slot</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {slots.map((slot) => (
-                      <button
-                        key={slot}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`py-3 px-4 rounded-xl border transition-all font-bold text-sm ${selectedSlot === slot ? 'border-primary bg-primary text-white shadow-md' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
+                  <DatePicker onSelect={(date, slot) => {
+                    setSelectedDate(date);
+                    setSelectedSlot(slot);
+                  }} />
                </div>
             </div>
           )}
@@ -183,7 +148,7 @@ export default function Booking() {
                <h3 className="font-bold text-lg mb-4 text-gray-800">Saved Addresses</h3>
                <div className="space-y-4 mb-6">
                  {addresses.map((addr) => (
-                   <label key={addr.id} className={`flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${selectedAddress === addr.id ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200 bg-white'}`}>
+                   <label key={addr.id} className={`flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${selectedAddress === addr.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-gray-100 hover:border-gray-200 bg-white'}`}>
                      <div className="mt-1">
                         <input type="radio" name="address" checked={selectedAddress === addr.id} onChange={() => setSelectedAddress(addr.id)} className="w-5 h-5 text-primary" />
                      </div>
@@ -197,10 +162,6 @@ export default function Booking() {
                    </label>
                  ))}
                </div>
-
-               <button className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl font-bold text-gray-500 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2">
-                 + Add New Address
-               </button>
              </div>
           )}
 
@@ -228,8 +189,12 @@ export default function Booking() {
                      </div>
                   </div>
                   <div className="p-6 bg-gray-50">
-                     <h3 className="text-xs font-bold text-gray-500 uppercase mb-4">Cart Item</h3>
-                     <CartItemCard service={service} />
+                     <h3 className="text-xs font-bold text-gray-500 uppercase mb-4">Cart Items ({totalItems})</h3>
+                     <div className="space-y-3">
+                       {cart.map(service => (
+                         <CartItemCard key={service.serviceId} service={service} />
+                       ))}
+                     </div>
                   </div>
                </div>
              </div>
@@ -242,23 +207,23 @@ export default function Booking() {
            <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 sticky top-24">
               <h3 className="font-bold text-lg border-b border-gray-100 pb-4 mb-4">Pricing Details</h3>
               <div className="flex justify-between py-2 text-sm">
-                <span className="text-gray-500">Service total</span>
-                <span className="font-bold text-gray-800">₹{service.price}</span>
+                <span className="text-gray-500">Service total ({totalItems} items)</span>
+                <span className="font-bold text-gray-800">₹{subtotal}</span>
               </div>
               <div className="flex justify-between py-2 text-sm border-b border-gray-100 pb-4">
-                <span className="text-gray-500">Taxes & Fees</span>
-                <span className="font-bold text-gray-800">₹{(service.price * 0.18).toFixed(2)}</span>
+                <span className="text-gray-500">Taxes & Fees (18% GST)</span>
+                <span className="font-bold text-gray-800">₹{(subtotal * 0.18).toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-4 text-lg font-black text-gray-900">
                 <span>Total Amount</span>
-                <span>₹{(service.price * 1.18).toFixed(2)}</span>
+                <span>₹{(subtotal * 1.18).toFixed(2)}</span>
               </div>
 
               <div className="flex flex-col gap-3 mt-4">
                 <button 
                   onClick={handleNext}
                   disabled={(currentStep === 1 && (!selectedDate || !selectedSlot)) || (currentStep === 2 && selectedAddress === null)}
-                  className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                  className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all focus:ring-4 focus:ring-primary/20 ${
                     ((currentStep === 1 && (!selectedDate || !selectedSlot)) || (currentStep === 2 && selectedAddress === null)) 
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
                       : 'bg-primary text-white hover:bg-primary-dark shadow-md hover:shadow-lg'

@@ -2,12 +2,9 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Star, ShieldCheck, Clock } from "lucide-react";
 import * as Icons from "lucide-react";
 import { categories, services } from "../utils/data";
-
-// Helper to dynamically render Lucide icons
-const IconComponent = ({ name, className }: { name: string, className?: string }) => {
-  const Icon = (Icons as any)[name];
-  return Icon ? <Icon className={className} /> : null;
-};
+import { CategoryCard } from "../components/CategoryCard";
+import { ServiceCard } from "../components/ServiceCard";
+import { SearchBar } from "../components/SearchBar";
 
 export default function Home() {
   const topServices = services.filter(s => s.rating >= 4.8).slice(0, 3);
@@ -25,10 +22,8 @@ export default function Home() {
             <p className="text-lg md:text-xl text-primary-100 mb-8 max-w-2xl">
               Experienced, hand-picked professionals to service your home. Book trusted cleaners, plumbers, and beauty experts instantly.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link to="/services" className="bg-white text-primary font-bold px-8 py-3 rounded-full hover:bg-gray-100 transition-all shadow-lg text-lg flex items-center justify-center gap-2">
-                Book a Service <ArrowRight className="h-5 w-5" />
-              </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start w-full max-w-md">
+              <SearchBar className="w-full" inputClassName="rounded-full py-4 text-gray-900 shadow-lg text-lg bg-white w-full" placeholder="Search for cleaning, repair..." />
             </div>
           </div>
           <div className="flex-1 hidden md:block">
@@ -124,12 +119,7 @@ export default function Home() {
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           {categories.map((cat) => (
-            <Link to={`/services?category=${cat.id}`} key={cat.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-primary/30 transition-all flex flex-col items-center text-center group">
-              <div className={`${cat.color} w-16 h-16 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                <IconComponent name={cat.icon} className="h-8 w-8" />
-              </div>
-              <h3 className="font-semibold text-gray-800 text-sm">{cat.name}</h3>
-            </Link>
+             <CategoryCard key={cat.id} category={cat} />
           ))}
         </div>
       </section>
@@ -201,26 +191,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {topServices.map(service => (
-              <div key={service.serviceId} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-all">
-                <div className="p-6 flex-grow">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-bold text-gray-900 leading-tight">{service.name}</h3>
-                    <div className="flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-bold">
-                      <Star className="h-3 w-3 fill-current" /> {service.rating}
-                    </div>
-                  </div>
-                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">{service.description}</p>
-                  <div className="flex items-center gap-4 text-sm font-medium text-gray-700 mb-6">
-                    <span className="flex items-center gap-1"><Clock className="h-4 w-4 text-gray-400" /> {service.duration}</span>
-                    <span className="bg-gray-100 px-2 py-0.5 rounded">₹{service.price}</span>
-                  </div>
-                </div>
-                <div className="p-4 border-t border-gray-50 bg-gray-50">
-                  <Link to={`/booking?serviceId=${service.serviceId}`} className="block w-full py-2.5 text-center bg-white border border-primary text-primary font-bold rounded-lg hover:bg-primary hover:text-white transition-colors">
-                    Add to Cart
-                  </Link>
-                </div>
-              </div>
+               <ServiceCard key={service.serviceId} service={service} />
             ))}
           </div>
         </div>
