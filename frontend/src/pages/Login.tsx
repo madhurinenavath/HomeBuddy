@@ -7,21 +7,33 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
   const navigate = useNavigate();
 
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length >= 10) {
+      const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      setGeneratedOtp(newOtp);
+      console.log("Your OTP is: " + newOtp);
+      setOtpError("");
+      setOtp("");
       setOtpSent(true);
     }
   };
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp === "1234") {
+    if (otp === generatedOtp) {
+      const names = ["Aarav Sharma", "Vivaan Singh", "Diya Patel", "Ananya Gupta", "Rohan Malhotra", "Kavya Desai", "Neha Sharma"];
+      const randomName = names[Math.floor(Math.random() * names.length)];
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${randomName}`;
+      localStorage.setItem("userName", randomName);
+      localStorage.setItem("userAvatar", avatarUrl);
       navigate('/profile');
     } else {
-      alert("Invalid OTP (Use 1234 for demo)");
+      setOtpError("OTP is invalid");
     }
   };
 
@@ -65,7 +77,7 @@ export default function Login() {
               <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <div>
                 We've sent a 4-digit code to +91 {phone}. 
-                <br/><span className="text-xs opacity-80">(Hint: Use 1234)</span>
+                <br/><span className="text-xs opacity-80">(Check your browser console!)</span>
               </div>
             </div>
             <div>
@@ -73,16 +85,32 @@ export default function Login() {
               <input 
                 type="text" 
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                onChange={(e) => {
+                  setOtp(e.target.value.replace(/\D/g, ''));
+                  setOtpError("");
+                }}
                 placeholder="• • • •"
-                className="w-full px-4 py-3 text-center tracking-[1em] text-xl rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                className={`w-full px-4 py-3 text-center tracking-[1em] text-xl rounded-xl border ${otpError ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-primary/20'} focus:ring-2 outline-none transition-all`}
                 required
                 maxLength={4}
               />
+              {otpError && <p className="text-red-500 text-sm font-bold mt-2">{otpError}</p>}
             </div>
             <button type="submit" className="w-full py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-sm">
               Verify & Login
             </button>
+            <p 
+              className="text-primary font-bold text-sm mt-4 text-center cursor-pointer hover:underline"
+              onClick={() => {
+                const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
+                setGeneratedOtp(newOtp);
+                console.log("Your new OTP is: " + newOtp);
+                setOtpError("");
+                setOtp("");
+              }}
+            >
+              Resend OTP
+            </p>
           </form>
         )}
 

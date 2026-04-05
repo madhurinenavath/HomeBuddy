@@ -37,6 +37,9 @@ export default function Payment() {
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+
   
   const [upiModalOpen, setUpiModalOpen] = useState(false);
   const [upiTimer, setUpiTimer] = useState(30);
@@ -116,6 +119,11 @@ export default function Payment() {
 
       // If valid, branch by method
       if (paymentMethod === 'card' || paymentMethod === 'netbanking') {
+        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedOtp(newOtp);
+        console.log("Your OTP is: " + newOtp);
+        setOtpError("");
+        setOtpCode("");
         setOtpModalOpen(true);
       } else if (paymentMethod === 'upi') {
         setUpiTimer(30);
@@ -131,7 +139,13 @@ export default function Payment() {
   const handleVerifyOtp = () => {
     if (otpCode.length < 4) return;
     setIsVerifyingOtp(true);
+    setOtpError("");
     setTimeout(() => {
+      if (otpCode !== generatedOtp) {
+        setOtpError("OTP is invalid");
+        setIsVerifyingOtp(false);
+        return;
+      }
       setIsVerifyingOtp(false);
       setOtpModalOpen(false);
       clearCart();
@@ -353,10 +367,14 @@ export default function Payment() {
             type="text" 
             maxLength={6}
             value={otpCode}
-            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))} // Numeric only
+            onChange={(e) => {
+              setOtpCode(e.target.value.replace(/\D/g, ''));
+              setOtpError("");
+            }} // Numeric only
             placeholder="• • • • • •" 
-            className="w-full max-w-[200px] text-center tracking-widest text-2xl font-black px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none mb-8" 
+            className={`w-full max-w-[200px] text-center tracking-widest text-2xl font-black px-4 py-3 rounded-lg border ${otpError ? 'border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-primary focus:ring-primary/20'} focus:ring-2 outline-none mb-4`} 
           />
+          {otpError && <p className="text-red-500 text-sm font-bold mb-4">{otpError}</p>}
           
           <button
             onClick={handleVerifyOtp}
@@ -368,7 +386,18 @@ export default function Payment() {
             {isVerifyingOtp ? 'Verifying...' : 'Verify & Pay'}
           </button>
           
-          <p className="text-primary font-bold text-sm mt-6 cursor-pointer hover:underline">Resend OTP</p>
+          <p 
+            className="text-primary font-bold text-sm mt-6 cursor-pointer hover:underline"
+            onClick={() => {
+              const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+              setGeneratedOtp(newOtp);
+              console.log("Your new OTP is: " + newOtp);
+              setOtpError("");
+              setOtpCode("");
+            }}
+          >
+            Resend OTP
+          </p>
         </div>
       </Modal>
 

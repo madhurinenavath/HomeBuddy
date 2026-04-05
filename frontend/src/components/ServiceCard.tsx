@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Star, Clock, ShoppingCart } from "lucide-react";
 import { type Service, categories } from "../utils/data";
 import { useCart } from "../CartContext";
@@ -11,9 +12,16 @@ interface ServiceCardProps {
 export function ServiceCard({ service, showCategory = false }: ServiceCardProps) {
   const category = categories.find(c => c.id === service.categoryId);
   const { addToCart } = useCart();
+  const navigate = useNavigate();
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!localStorage.getItem("userName")) {
+      setErrorMsg("To continue the process please login to the website.");
+      setTimeout(() => navigate('/login'), 2000);
+      return;
+    }
     addToCart(service);
   };
 
@@ -42,13 +50,16 @@ export function ServiceCard({ service, showCategory = false }: ServiceCardProps)
           <span className="bg-gray-100 px-2 py-0.5 rounded font-bold">₹{service.price}</span>
         </div>
       </div>
-      <div className="p-4 border-t border-gray-50 bg-gray-50 flex gap-3">
-        <Link to={`/service/${service.serviceId}`} className="flex-1 py-2.5 text-center text-gray-600 font-bold rounded-lg hover:bg-gray-200 transition-colors text-sm">
-          Details
-        </Link>
-        <button onClick={handleAddToCart} className="flex-[2] py-2.5 text-center bg-primary text-white font-bold rounded-lg hover:bg-primary-dark shadow-sm transition-all text-sm flex items-center justify-center gap-1.5 focus:ring-4 focus:ring-primary/20">
-          <ShoppingCart className="h-4 w-4" /> Add Custom
-        </button>
+      <div className="p-4 border-t border-gray-50 bg-gray-50 flex flex-col gap-3">
+        {errorMsg && <div className="text-red-500 text-xs font-bold text-center animate-in fade-in">{errorMsg}</div>}
+        <div className="flex gap-3">
+          <Link to={`/service/${service.serviceId}`} className="flex-1 py-2.5 text-center text-gray-600 font-bold rounded-lg hover:bg-gray-200 transition-colors text-sm">
+            Details
+          </Link>
+          <button onClick={handleAddToCart} className="flex-[2] py-2.5 text-center bg-primary text-white font-bold rounded-lg hover:bg-primary-dark shadow-sm transition-all text-sm flex items-center justify-center gap-1.5 focus:ring-4 focus:ring-primary/20">
+            <ShoppingCart className="h-4 w-4" /> Add Custom
+          </button>
+        </div>
       </div>
     </div>
   );

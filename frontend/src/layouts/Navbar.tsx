@@ -1,10 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Wrench, User, Calendar, ShoppingCart } from "lucide-react";
 import { SearchBar } from "../components/SearchBar";
 import { useCart } from "../CartContext";
 
 export function Navbar() {
   const { totalItems } = useCart();
+  const navigate = useNavigate();
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,14 +35,24 @@ export function Navbar() {
             </div>
             
             <div className="flex items-center space-x-4 md:border-l md:border-gray-100 md:pl-6">
-              <Link to="/booking" className="relative text-gray-600 hover:text-primary transition-colors flex items-center">
+              <button 
+                onClick={() => {
+                  if (!localStorage.getItem("userName")) {
+                    alert("to continue the process please login to the website.");
+                    navigate('/login');
+                  } else {
+                    navigate('/booking');
+                  }
+                }}
+                className="relative text-gray-600 hover:text-primary transition-colors flex items-center bg-transparent border-none p-0 cursor-pointer"
+              >
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-secondary text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
                     {totalItems}
                   </span>
                 )}
-              </Link>
+              </button>
 
               <Link to="/profile" className="text-gray-600 hover:text-primary transition-colors">
                 <Calendar className="h-5 w-5" />

@@ -4,7 +4,8 @@ import { Stepper } from "../components/Stepper";
 import { CartItemCard } from "../components/CartItemCard";
 import { DatePicker } from "../components/DatePicker";
 import { useCart } from "../CartContext";
-import { ArrowRight, ArrowLeft, MapPin, Calendar as CalendarIcon, Clock, Map, ShoppingBag } from "lucide-react";
+import { ArrowRight, ArrowLeft, MapPin, Calendar as CalendarIcon, Clock, Map, ShoppingBag, Plus } from "lucide-react";
+import { Modal } from "../components/Modal";
 
 export default function Booking() {
   const { cart, subtotal, totalItems } = useCart();
@@ -18,7 +19,12 @@ export default function Booking() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
-  const [isFindingLocation, setIsFindingLocation] = useState(false);
+  
+  // Custom Address Logic
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [newFlat, setNewFlat] = useState("");
+  const [newStreet, setNewStreet] = useState("");
+  const [newType, setNewType] = useState<"Home" | "Office" | "Other">("Home");
 
   if (cart.length === 0) {
     return (
@@ -42,17 +48,18 @@ export default function Booking() {
     { id: 2, type: "Office", name: "Demo User", address: "Floor 3, Tech Park, Cyber City, Gurgaon, 122008" }
   ]);
 
-  const handleDetectLocation = () => {
-    setIsFindingLocation(true);
-    setTimeout(() => {
-      const newId = Date.now();
-      setAddresses(prev => [
-        { id: newId, type: "Current", name: "Demo User", address: "Detected Location (Lat: 28.4595, Lng: 77.0266)" },
-        ...prev
-      ]);
-      setSelectedAddress(newId);
-      setIsFindingLocation(false);
-    }, 1500);
+  const handleSaveAddress = () => {
+     if (!newFlat.trim() || !newStreet.trim()) return;
+     const newId = Date.now();
+     setAddresses([
+       { id: newId, type: newType, name: "Demo User", address: `${newFlat}, ${newStreet}` },
+       ...addresses
+     ]);
+     setSelectedAddress(newId);
+     setAddModalOpen(false);
+     setNewFlat("");
+     setNewStreet("");
+     setNewType("Home");
   };
 
   const handleNext = () => {
@@ -126,26 +133,31 @@ export default function Booking() {
                  <MapPin className="h-6 w-6 text-primary" /> Service Location
                </h1>
 
-               {/* Google Maps Fake UI */}
-               <div className="w-full h-64 bg-gray-200 rounded-2xl mb-8 relative overflow-hidden border border-gray-300 shadow-inner">
-                  {/* Map Graphic Mock */}
-                  <img src="https://images.unsplash.com/photo-1524661135-423588f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Map" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/50 to-transparent"></div>
-                  
-                  {/* Map Pin */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                    <button 
-                      onClick={handleDetectLocation}
-                      disabled={isFindingLocation}
-                      className="bg-white px-4 py-2 rounded-full shadow-lg text-sm font-bold whitespace-nowrap mb-2 hover:bg-primary hover:text-white transition-colors flex items-center gap-2"
-                    >
-                      {isFindingLocation ? 'Locating...' : 'Use My Current Location'}
-                    </button>
-                    {!isFindingLocation && <Map className="h-10 w-10 text-primary drop-shadow-md animate-bounce" />}
-                  </div>
+               {/* Interactive OpenStreetMap iframe */}
+               <div className="w-full h-80 bg-gray-200 rounded-2xl mb-8 relative overflow-hidden border border-gray-300 shadow-inner">
+                  <iframe 
+                    title="Real Location Map"
+                    width="100%" 
+                    height="100%" 
+                    frameBorder="0" 
+                    scrolling="no" 
+                    marginHeight={0} 
+                    marginWidth={0} 
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=76.9944%2C28.4116%2C77.0624%2C28.4891&amp;layer=mapnik&amp;marker=28.4504%2C77.0284" 
+                    style={{ border: 0 }}
+                  ></iframe>
                </div>
 
-               <h3 className="font-bold text-lg mb-4 text-gray-800">Saved Addresses</h3>
+               <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg text-gray-800">Saved Addresses</h3>
+                <button 
+                  onClick={() => setAddModalOpen(true)}
+                  className="bg-primary/10 text-primary font-bold px-4 py-2 rounded-lg hover:bg-primary/20 transition-colors flex items-center gap-2 text-sm"
+                >
+                  <Plus className="h-4 w-4" /> Add Coordinates
+                </button>
+               </div>
+
                <div className="space-y-4 mb-6">
                  {addresses.map((addr) => (
                    <label key={addr.id} className={`flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${selectedAddress === addr.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-gray-100 hover:border-gray-200 bg-white'}`}>
@@ -245,6 +257,60 @@ export default function Booking() {
         </div>
 
       </div>
+
+      {/* Add Address Modal Component */}
+      <Modal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} title="Add New Address">
+         <div className="space-y-4">
+           <div>
+             <label className="block text-sm font-bold text-gray-700 mb-1">Flat / House No. / Building</label>
+             <input 
+               type="text" 
+               placeholder="e.g. Flat 101, B Block" 
+               value={newFlat}
+               onChange={(e) => setNewFlat(e.target.value)}
+               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" 
+             />
+           </div>
+           <div>
+             <label className="block text-sm font-bold text-gray-700 mb-1">Society / Street / Area</label>
+             <input 
+               type="text" 
+               placeholder="e.g. Sector 14, MG Road" 
+               value={newStreet}
+               onChange={(e) => setNewStreet(e.target.value)}
+               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" 
+             />
+           </div>
+           
+           <div>
+             <label className="block text-sm font-bold text-gray-700 mb-2">Save Address As</label>
+             <div className="flex gap-2">
+               {["Home", "Office", "Other"].map(type => (
+                 <button 
+                   key={type}
+                   onClick={() => setNewType(type as any)}
+                   className={`flex-1 py-2 rounded-lg font-bold text-sm transition-all border ${
+                     newType === type ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                   }`}
+                 >
+                   {type}
+                 </button>
+               ))}
+             </div>
+           </div>
+
+           <button 
+             onClick={handleSaveAddress}
+             disabled={!newFlat.trim() || !newStreet.trim()}
+             className={`w-full py-4 mt-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-white text-lg ${
+               !newFlat.trim() || !newStreet.trim() ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark shadow-md hover:shadow-lg'
+             }`}
+           >
+             Save Address
+           </button>
+         </div>
+      </Modal>
+
     </div>
   );
 }

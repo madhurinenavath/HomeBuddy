@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { services, categories } from "../utils/data";
 import { Star, Clock, ShieldCheck, ArrowRight, ArrowLeft, ShoppingCart } from "lucide-react";
@@ -7,6 +8,7 @@ export default function ServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, cart } = useCart();
+  const [errorMsg, setErrorMsg] = useState("");
 
   const service = services.find(s => s.serviceId === id);
 
@@ -55,7 +57,14 @@ export default function ServiceDetails() {
                  <li className="flex items-start gap-2 text-sm text-gray-600"><ShieldCheck className="h-5 w-5 text-green-500 flex-shrink-0" /> 30-Day Service Guarantee</li>
               </ul>
               <button 
-                onClick={() => isAdded ? navigate('/booking') : addToCart(service)} 
+                onClick={() => {
+                  if (!localStorage.getItem("userName")) {
+                    setErrorMsg("To continue the process please login to the website.");
+                    setTimeout(() => navigate('/login'), 2000);
+                    return;
+                  }
+                  isAdded ? navigate('/booking') : addToCart(service);
+                }} 
                 className={`w-full py-4 text-center font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-lg flex items-center justify-center gap-2 focus:ring-4 focus:ring-primary/20 ${isAdded ? 'bg-secondary text-white' : 'bg-primary text-white hover:bg-primary-dark'}`}>
                 {isAdded ? (
                   <>Proceed to Checkout <ArrowRight className="h-5 w-5" /></>
@@ -63,6 +72,7 @@ export default function ServiceDetails() {
                   <><ShoppingCart className="h-5 w-5" /> Add to Cart</>
                 )}
               </button>
+              {errorMsg && <div className="mt-3 text-red-500 text-sm font-bold text-center animate-in fade-in">{errorMsg}</div>}
            </div>
         </div>
       </div>

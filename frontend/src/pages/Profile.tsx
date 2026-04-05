@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { User, FileText, Settings, Heart, MapPin, Search, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { User, FileText, Settings, Heart, MapPin, Search, Plus, LogOut } from "lucide-react";
 import { StatusBadge, type StatusType } from "../components/StatusBadge";
 import { Modal } from "../components/Modal";
 import { Timeline, type OrderStage } from "../components/Timeline";
@@ -48,8 +49,18 @@ const pastOrders = [
 ];
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'orders' | 'favorites' | 'addresses' | 'settings'>('orders');
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const [userName, setUserName] = useState("Demo User");
+  const [userAvatar, setUserAvatar] = useState("");
+
+  useEffect(() => {
+    const storedName = localStorage.getItem("userName");
+    const storedAvatar = localStorage.getItem("userAvatar");
+    if (storedName) setUserName(storedName);
+    if (storedAvatar) setUserAvatar(storedAvatar);
+  }, []);
   
   // Tracking Modal State
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
@@ -72,10 +83,14 @@ export default function Profile() {
         <div className="w-full md:w-72 flex-shrink-0">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 overflow-hidden sticky top-24">
             <div className="flex flex-col items-center mb-6 border-b border-gray-100 pb-6">
-              <div className="bg-primary/10 w-24 h-24 rounded-full flex items-center justify-center mb-4">
-                <User className="h-12 w-12 text-primary" />
+              <div className="bg-primary/10 w-24 h-24 rounded-full flex items-center justify-center mb-4 overflow-hidden">
+                {userAvatar ? (
+                  <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-12 w-12 text-primary" />
+                )}
               </div>
-              <h2 className="font-bold text-xl text-gray-900">Demo User</h2>
+              <h2 className="font-bold text-xl text-gray-900">{userName}</h2>
               <p className="text-gray-500 text-sm mt-1">+91 9876543210</p>
             </div>
             <div className="space-y-2">
@@ -102,6 +117,19 @@ export default function Profile() {
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors ${activeSection === 'settings' ? 'font-bold bg-primary/10 text-primary' : 'font-semibold text-gray-600 hover:bg-gray-50'}`}
               >
                 <Settings className="h-5 w-5" /> Account Settings
+              </button>
+            </div>
+            
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <button 
+                onClick={() => {
+                  localStorage.removeItem("userName");
+                  localStorage.removeItem("userAvatar");
+                  navigate('/');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="h-5 w-5" /> Log Out
               </button>
             </div>
           </div>
@@ -218,7 +246,7 @@ export default function Profile() {
                     <div className="flex justify-between items-start mb-2">
                        <span className="bg-gray-100 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">Home</span>
                     </div>
-                    <h3 className="font-bold text-gray-900 mt-2">Demo User</h3>
+                    <h3 className="font-bold text-gray-900 mt-2">{userName}</h3>
                     <p className="text-gray-600 text-sm mt-1 mb-4">Flat 4B, Signature Towers, MG Road, Gurgaon, 122002</p>
                     <div className="flex gap-3 mt-auto">
                       <button className="text-sm font-bold text-primary hover:underline">Edit</button>
@@ -230,7 +258,7 @@ export default function Profile() {
                     <div className="flex justify-between items-start mb-2">
                        <span className="bg-gray-100 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">Office</span>
                     </div>
-                    <h3 className="font-bold text-gray-900 mt-2">Demo User</h3>
+                    <h3 className="font-bold text-gray-900 mt-2">{userName}</h3>
                     <p className="text-gray-600 text-sm mt-1 mb-4">Floor 3, Tech Park, Cyber City, Gurgaon, 122008</p>
                     <div className="flex gap-3 mt-auto">
                       <button className="text-sm font-bold text-primary hover:underline">Edit</button>
@@ -252,7 +280,7 @@ export default function Profile() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
-                      <input type="text" defaultValue="Demo User" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary" />
+                      <input type="text" defaultValue={userName} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary" />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
