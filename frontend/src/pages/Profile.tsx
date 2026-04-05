@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, FileText, Settings, Heart, MapPin, Search, Plus, LogOut } from "lucide-react";
+import { User, FileText, Settings, Heart, MapPin, Search, Plus, LogOut, CheckCircle } from "lucide-react";
 import { StatusBadge, type StatusType } from "../components/StatusBadge";
 import { Modal } from "../components/Modal";
 import { Timeline, type OrderStage } from "../components/Timeline";
 import { services } from "../utils/data";
 import { ServiceCard } from "../components/ServiceCard";
+import { Input } from "../components/Input";
+import { Button } from "../components/Button";
 
 // Mock Active and Past Orders
 const activeOrders = [
@@ -48,6 +50,20 @@ const pastOrders = [
   }
 ];
 
+// Mock Initial Addresses
+const initialAddresses = [
+  {
+    id: "1",
+    label: "Home",
+    address: "Flat 4B, Signature Towers, MG Road, Gurgaon, 122002"
+  },
+  {
+    id: "2",
+    label: "Office",
+    address: "Floor 3, Tech Park, Cyber City, Gurgaon, 122008"
+  }
+];
+
 export default function Profile() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<'orders' | 'favorites' | 'addresses' | 'settings'>('orders');
@@ -55,10 +71,27 @@ export default function Profile() {
   const [userName, setUserName] = useState("Demo User");
   const [userAvatar, setUserAvatar] = useState("");
 
+  const [addresses, setAddresses] = useState(initialAddresses);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  
+  // Address Form State
+  const [addrForm, setAddrForm] = useState({ label: "", address: "" });
+  const [addrError, setAddrError] = useState("");
+
+  // Settings State
+  const [settingsName, setSettingsName] = useState(userName);
+  const [settingsEmail, setSettingsEmail] = useState("demo.user@example.com");
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
+
   useEffect(() => {
     const storedName = localStorage.getItem("userName");
     const storedAvatar = localStorage.getItem("userAvatar");
-    if (storedName) setUserName(storedName);
+    if (storedName) {
+      setUserName(storedName);
+      setSettingsName(storedName);
+    }
     if (storedAvatar) setUserAvatar(storedAvatar);
   }, []);
   
@@ -67,12 +100,57 @@ export default function Profile() {
   const [selectedOrderStage, setSelectedOrderStage] = useState<OrderStage>("Requested");
   const [selectedOrderDate, setSelectedOrderDate] = useState<string>("");
 
-  const favoriteServices = services.slice(0, 2); // Taking first 2 as mock favorites
+  const favoriteServices = services.slice(0, 2);
 
   const openTracking = (stage: OrderStage, date: string) => {
     setSelectedOrderStage(stage);
     setSelectedOrderDate(date);
     setTrackingModalOpen(true);
+  };
+
+  const handleAddressSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addrForm.label.trim() || !addrForm.address.trim()) {
+      setAddrError("All fields are required");
+      return;
+    }
+    
+    if (editingAddressId) {
+      setAddresses(prev => prev.map(a => a.id === editingAddressId ? { ...a, ...addrForm } : a));
+    } else {
+      setAddresses(prev => [...prev, { id: Date.now().toString(), ...addrForm }]);
+    }
+    setAddressModalOpen(false);
+    setAddrForm({ label: "", address: "" });
+    setEditingAddressId(null);
+  };
+
+  const openAddressModal = (addr?: { id: string; label: string; address: string }) => {
+    setAddrError("");
+    if (addr) {
+      setAddrForm({ label: addr.label, address: addr.address });
+      setEditingAddressId(addr.id);
+    } else {
+      setAddrForm({ label: "", address: "" });
+      setEditingAddressId(null);
+    }
+    setAddressModalOpen(true);
+  };
+
+  const deleteAddress = (id: string) => {
+    setAddresses(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    setTimeout(() => {
+      setSettingsLoading(false);
+      setUserName(settingsName);
+      localStorage.setItem("userName", settingsName);
+      setSettingsSuccess(true);
+      setTimeout(() => setSettingsSuccess(false), 3000);
+    }, 1000);
   };
 
   return (
@@ -160,8 +238,14 @@ export default function Profile() {
 
                 <div className="p-6">
                   <div className="relative mb-6">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input type="text" placeholder="Search orders by service or ID..." className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-primary focus:bg-white transition-all text-sm" />
+                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                     <Input 
+                       label="" 
+                       type="text" 
+                       placeholder="Search orders by service or ID..." 
+                       containerClassName="!mt-0" 
+                       className="pl-12 bg-gray-50"
+                     />
                   </div>
 
                   <div className="space-y-4">
@@ -180,12 +264,12 @@ export default function Profile() {
                            </div>
                            <div className="flex-shrink-0 flex flex-col items-end gap-3 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
                               <span className="font-black text-xl text-gray-800">{order.amount}</span>
-                              <button 
+                              <Button 
                                 onClick={() => openTracking(order.stage, order.date)}
-                                className="bg-primary hover:bg-primary-dark text-white font-bold py-2.5 px-6 rounded-lg shadow-sm transition-all text-sm w-full md:w-auto"
+                                className="!py-2.5 !px-6 text-sm"
                               >
                                 Track Order
-                              </button>
+                              </Button>
                            </div>
                         </div>
                       ))
@@ -205,9 +289,9 @@ export default function Profile() {
                            <div className="flex-shrink-0 flex flex-col items-end gap-3 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
                               <span className="font-bold text-lg text-gray-800">{order.amount}</span>
                               {order.status === 'Completed' ? (
-                                <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-lg transition-all text-sm w-full md:w-auto">
+                                <Button variant="secondary" className="!bg-gray-100 !text-gray-800 hover:!bg-gray-200 !py-2.5 !px-6 text-sm">
                                   Rate Experience
-                                </button>
+                                </Button>
                               ) : null}
                            </div>
                         </div>
@@ -236,35 +320,33 @@ export default function Profile() {
             <div className="animate-in fade-in slide-in-from-bottom-4">
               <div className="flex items-center justify-between mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">Saved Addresses</h1>
-                <button className="flex items-center gap-2 bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-dark transition-all text-sm">
-                  <Plus className="h-4 w-4" /> Add New
-                </button>
+                <Button 
+                  onClick={() => openAddressModal()}
+                  className="!py-2.5 !px-4 text-sm"
+                  leftIcon={<Plus className="h-4 w-4" />}
+                >
+                  Add New
+                </Button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-2">
-                       <span className="bg-gray-100 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">Home</span>
-                    </div>
-                    <h3 className="font-bold text-gray-900 mt-2">{userName}</h3>
-                    <p className="text-gray-600 text-sm mt-1 mb-4">Flat 4B, Signature Towers, MG Road, Gurgaon, 122002</p>
-                    <div className="flex gap-3 mt-auto">
-                      <button className="text-sm font-bold text-primary hover:underline">Edit</button>
-                      <button className="text-sm font-bold text-red-500 hover:underline">Delete</button>
-                    </div>
-                 </div>
-                 
-                 <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-2">
-                       <span className="bg-gray-100 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">Office</span>
-                    </div>
-                    <h3 className="font-bold text-gray-900 mt-2">{userName}</h3>
-                    <p className="text-gray-600 text-sm mt-1 mb-4">Floor 3, Tech Park, Cyber City, Gurgaon, 122008</p>
-                    <div className="flex gap-3 mt-auto">
-                      <button className="text-sm font-bold text-primary hover:underline">Edit</button>
-                      <button className="text-sm font-bold text-red-500 hover:underline">Delete</button>
-                    </div>
-                 </div>
+                 {addresses.length === 0 ? (
+                   <div className="col-span-2 text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
+                     No saved addresses found. Click "Add New" to add one.
+                   </div>
+                 ) : addresses.map(addr => (
+                   <div key={addr.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-2">
+                         <span className="bg-gray-100 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">{addr.label}</span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 mt-2">{userName}</h3>
+                      <p className="text-gray-600 text-sm mt-1 mb-4">{addr.address}</p>
+                      <div className="flex gap-3 mt-auto">
+                        <button onClick={() => openAddressModal(addr)} className="text-sm font-bold text-primary hover:underline">Edit</button>
+                        <button onClick={() => deleteAddress(addr.id)} className="text-sm font-bold text-red-500 hover:underline">Delete</button>
+                      </div>
+                   </div>
+                 ))}
               </div>
             </div>
           )}
@@ -274,27 +356,43 @@ export default function Profile() {
             <div className="animate-in fade-in slide-in-from-bottom-4">
               <h1 className="text-3xl font-bold text-gray-900 mb-8">Account Settings</h1>
               
+              {settingsSuccess && (
+                <div className="bg-green-50 text-green-700 p-4 rounded-xl text-sm font-medium flex items-start gap-3 mb-6">
+                  <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <div>Settings updated successfully!</div>
+                </div>
+              )}
+
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-6">
-                <div>
+                <form onSubmit={handleSaveSettings}>
                   <h3 className="font-bold text-lg text-gray-900 mb-4 border-b border-gray-100 pb-2">Profile Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
-                      <input type="text" defaultValue={userName} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Phone Number</label>
-                      <input type="text" defaultValue="+91 9876543210" disabled className="w-full px-4 py-2 bg-gray-100 border border-gray-200 text-gray-500 rounded-lg outline-none cursor-not-allowed" />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
-                      <input type="email" defaultValue="demo.user@example.com" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary" />
-                    </div>
+                    <Input
+                      label="Full Name"
+                      value={settingsName}
+                      onChange={(e) => setSettingsName(e.target.value)}
+                      required
+                    />
+                    <Input
+                      label="Phone Number"
+                      value="+91 9876543210"
+                      disabled
+                    />
+                    <Input
+                      label="Email Address"
+                      type="email"
+                      value={settingsEmail}
+                      onChange={(e) => setSettingsEmail(e.target.value)}
+                      containerClassName="md:col-span-2"
+                      required
+                    />
                   </div>
-                  <button className="mt-4 bg-primary text-white font-bold py-2 px-6 rounded-lg text-sm hover:bg-primary-dark transition-all">Save Changes</button>
-                </div>
+                  <Button type="submit" isLoading={settingsLoading} className="mt-6">
+                    Save Changes
+                  </Button>
+                </form>
                 
-                <div className="pt-4">
+                <div className="pt-4 mt-6">
                   <h3 className="font-bold text-lg text-gray-900 mb-4 border-b border-gray-100 pb-2">Preferences</h3>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" defaultChecked className="w-5 h-5 text-primary rounded" />
@@ -334,6 +432,30 @@ export default function Profile() {
                <p className="text-sm text-blue-800 mt-1">If you need immediate assistance, call {activeOrders[0]?.professional.split(' ')[0]} at +91 99****6789.</p>
             </div>
          </div>
+      </Modal>
+
+      <Modal isOpen={addressModalOpen} onClose={() => setAddressModalOpen(false)} title={editingAddressId ? "Edit Address" : "Add New Address"}>
+        <form onSubmit={handleAddressSubmit} className="space-y-4">
+          {addrError && <div className="text-red-500 text-sm font-bold">{addrError}</div>}
+          <Input 
+            label="Address Label" 
+            placeholder="e.g. Home, Office, Other" 
+            value={addrForm.label}
+            onChange={(e) => setAddrForm(prev => ({ ...prev, label: e.target.value }))}
+          />
+          <div>
+             <label className="block text-sm font-bold text-gray-700 mb-2">Full Address</label>
+             <textarea 
+               className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 bg-gray-50 focus:bg-white transition-all resize-none h-24"
+               placeholder="Street address, locality, landmark, city, pincode"
+               value={addrForm.address}
+               onChange={(e) => setAddrForm(prev => ({ ...prev, address: e.target.value }))}
+             ></textarea>
+          </div>
+          <Button type="submit" fullWidth>
+            {editingAddressId ? "Save Changes" : "Save Address"}
+          </Button>
+        </form>
       </Modal>
 
     </div>
